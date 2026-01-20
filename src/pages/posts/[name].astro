@@ -1,0 +1,365 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import ReprintNotice from "@/components/ReprintNotice.astro";
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  const sortedPosts = [...posts].sort(
+    (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+  );
+  const toDateText = (value) =>
+    value instanceof Date ? value.toISOString() : String(value ?? "");
+
+  return sortedPosts.map((post, index) => {
+    const prevPost = sortedPosts[index + 1];
+    const nextPost = sortedPosts[index - 1];
+
+    return {
+      params: { name: post.slug },
+      props: {
+        entry: post,
+        prev: prevPost
+          ? {
+              title: prevPost.data.title,
+              slug: prevPost.slug,
+              date: toDateText(prevPost.data.date),
+            }
+          : null,
+        next: nextPost
+          ? {
+              title: nextPost.data.title,
+              slug: nextPost.slug,
+              date: toDateText(nextPost.data.date),
+            }
+          : null,
+      },
+    };
+  });
+}
+
+type Props = {
+  entry: CollectionEntry<"blog">;
+  prev?: {
+    title: string;
+    slug: string;
+    date: string;
+  } | null;
+  next?: {
+    title: string;
+    slug: string;
+    date: string;
+  } | null;
+};
+
+const { entry, prev, next } = Astro.props as Props;
+const { Content, headings } = await entry.render();
+
+const hasText = (value) => typeof value === "string" && value.trim().length > 0;
+const formatDate = (value) =>
+  value instanceof Date
+    ? value.toISOString().slice(0, 10)
+    : String(value ?? "");
+
+const title = entry.data.title;
+const description = hasText(entry.data.description)
+  ? entry.data.description.trim()
+  : "";
+const dateText = formatDate(entry.data.date);
+const updatedText = entry.data.updated ? formatDate(entry.data.updated) : "";
+const tags = (entry.data.tags ?? [])
+  .map((tag) =>
+    typeof tag === "string" ? tag.trim() : String(tag ?? "").trim(),
+  )
+  .filter(Boolean);
+// const category = hasText(entry.data.categories)
+//   ? entry.data.categories.trim()
+//   : "";
+
+const isAbsoluteUrl = (value) =>
+  value.startsWith("http://") || value.startsWith("https://");
+const resolveCover = (value) => {
+  if (!hasText(value)) return "";
+  if (isAbsoluteUrl(value) || value.startsWith("/")) return value;
+  return `/content/blog/${entry.data.title}/${value}`;
+};
+
+const bannerImage = entry.data.banner_img ?? entry.data.index_img;
+const bannerSrc = resolveCover(bannerImage);
+const tocItems = (headings ?? []).filter(
+  (item) => item.depth >= 2 && item.depth <= 3,
+);
+---
+
+<Layout title={`${title} - Shiina's Blog`} description={description}>
+  <main class="mx-auto max-w-7xl px-4 py-10">
+    <div
+      class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] lg:gap-8"
+    >
+      <div class="hidden lg:block"></div>
+      <div class="min-w-0">
+        <div id="post-top"></div>
+        <article class="space-y-10">
+          <header class="space-y-5">
+            <!-- <div
+              class="flex flex-wrap items-center gap-2 text-xs text-neutral-300"
+            >
+              {
+                category && (
+                  <span class="rounded-full border border-neutral-800 bg-neutral-900/70 px-3 py-1 text-neutral-200">
+                    {category}
+                  </span>
+                )
+              }
+            </div> -->
+
+            <h1 class="text-3xl font-semibold tracking-tight md:text-4xl">
+              {title}
+            </h1>
+
+            <div
+              class="flex flex-wrap items-center gap-3 text-sm text-neutral-400"
+            >
+              <span>{dateText}</span>
+              {updatedText && <span>更新 {updatedText}</span>}
+              <div
+                class="flex flex-wrap items-center gap-2 text-xs text-neutral-300"
+              >
+                {
+                  tags.map((tag) => (
+                    <a
+                      class="rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1 text-neutral-300 transition hover:border-[#0F766E] hover:text-[#5EEAD4]"
+                      href={`/tags/${encodeURIComponent(tag)}`}
+                    >
+                      {tag}
+                    </a>
+                  ))
+                }
+              </div>
+            </div>
+
+            <!-- {
+              description && (
+                <p class="text-sm text-neutral-400">{description}</p>
+              )
+            } -->
+            <!-- 
+            {
+              bannerSrc && (
+                <div class="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60">
+                  <img
+                    class="h-full w-full object-cover"
+                    src={bannerSrc}
+                    alt={title}
+                    loading="lazy"
+                  />
+                </div>
+              )
+            } -->
+          </header>
+
+          <div
+            class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 md:p-8"
+          >
+            <article
+              class="post-content prose prose-invert max-w-none
+          prose-headings:scroll-mt-24
+          prose-headings:text-neutral-100
+          prose-p:text-neutral-300
+          prose-a:text-[#2DD4BF] prose-a:font-medium prose-a:no-underline hover:prose-a:text-[#99F6E4] prose-a:break-all
+          prose-strong:text-neutral-100
+          prose-code:text-[#99F6E4] prose-code:rounded-md prose-code:px-1.5 prose-code:py-0.5
+          prose-code:before:content-[''] prose-code:after:content-['']
+          prose-pre:bg-neutral-950 prose-pre:border prose-pre:border-neutral-800 prose-pre:rounded-xl
+          prose-blockquote:border-[#0F766E] prose-blockquote:bg-neutral-950/60 prose-blockquote:rounded-xl prose-blockquote:px-4 prose-blockquote:py-1
+          prose-hr:border-neutral-800
+          prose-li:marker:text-neutral-500
+          prose-img:rounded-md prose-img:border prose-img:border-neutral-800
+          prose-table:border prose-table:border-neutral-800
+          prose-th:border prose-th:border-neutral-800
+          prose-td:border prose-td:border-neutral-800"
+            >
+              <Content />
+            </article>
+          </div>
+
+          <ReprintNotice />
+
+          {
+            (prev || next) && (
+              <nav class="grid gap-4 md:grid-cols-2">
+                {prev && (
+                  <a
+                    class="group rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 transition hover:border-[#0F766E]"
+                    href={`/posts/${prev.slug}`}
+                  >
+                    <span class="text-xs text-neutral-500">上一篇</span>
+                    <h2 class="mt-2 text-base font-semibold text-neutral-100 transition group-hover:text-[#5EEAD4]">
+                      {prev.title}
+                    </h2>
+                    <p class="mt-2 text-xs text-neutral-500">
+                      {formatDate(prev.date)}
+                    </p>
+                  </a>
+                )}
+                {next && (
+                  <a
+                    class="group rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 text-right transition hover:border-[#0F766E] md:col-start-2"
+                    href={`/posts/${next.slug}`}
+                  >
+                    <span class="text-xs text-neutral-500">下一篇</span>
+                    <h2 class="mt-2 text-base font-semibold text-neutral-100 transition group-hover:text-[#5EEAD4]">
+                      {next.title}
+                    </h2>
+                    <p class="mt-2 text-xs text-neutral-500">
+                      {formatDate(next.date)}
+                    </p>
+                  </a>
+                )}
+              </nav>
+            )
+          }
+          <div id="post-bottom"></div>
+        </article>
+      </div>
+
+      <aside class="mt-10 lg:mt-0">
+        <div class="space-y-4 lg:sticky lg:top-6 lg:max-w-[240px]">
+          <details
+            class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4"
+          >
+            <summary
+              class="cursor-pointer select-none text-sm font-semibold text-neutral-100"
+            >
+              目录
+            </summary>
+            <div class="mt-3">
+              {
+                tocItems.length > 0 ? (
+                  <nav class="space-y-2 text-sm text-neutral-300">
+                    {tocItems.map((item) => (
+                      <a
+                        class={`toc-link block transition hover:text-[#5EEAD4] ${
+                          item.depth === 3 ? "pl-4 text-neutral-400" : ""
+                        }`}
+                        data-toc-link={item.slug}
+                        href={`#${item.slug}`}
+                      >
+                        {item.text}
+                      </a>
+                    ))}
+                  </nav>
+                ) : (
+                  <p class="text-sm text-neutral-500">暂无目录</p>
+                )
+              }
+            </div>
+          </details>
+
+          <div
+            class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 text-sm text-neutral-300"
+          >
+            <div class="flex flex-wrap items-center gap-3">
+              <a class="transition hover:text-[#5EEAD4]" href="#post-top">
+                回到顶部
+              </a>
+              <a class="transition hover:text-[#5EEAD4]" href="#post-bottom">
+                跳到底部
+              </a>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</Layout>
+
+<script is:inline>
+  const initTocHighlight = () => {
+    const links = Array.from(document.querySelectorAll("[data-toc-link]"));
+    if (links.length === 0) return;
+
+    const sections = links
+      .map((link) => {
+        const id = link.getAttribute("data-toc-link");
+        const heading = id ? document.getElementById(id) : null;
+        return heading ? { id, link, heading } : null;
+      })
+      .filter(Boolean);
+
+    if (sections.length === 0) return;
+
+    const setActive = (id) => {
+      for (const item of sections) {
+        const isActive = item.id === id;
+        if (isActive) {
+          item.link.dataset.active = "true";
+          item.link.setAttribute("aria-current", "true");
+        } else {
+          delete item.link.dataset.active;
+          item.link.removeAttribute("aria-current");
+        }
+      }
+    };
+
+    const offset = 120;
+    let activeId = null;
+
+    const onScroll = () => {
+      let currentId = sections[0]?.id ?? null;
+      for (const item of sections) {
+        const top = item.heading.getBoundingClientRect().top;
+        if (top - offset <= 0) {
+          currentId = item.id;
+        } else {
+          break;
+        }
+      }
+      if (currentId && currentId !== activeId) {
+        activeId = currentId;
+        setActive(currentId);
+      }
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+  };
+
+  let tocReady = false;
+  const boot = () => {
+    if (tocReady) return;
+    tocReady = true;
+    initTocHighlight();
+  };
+
+  document.addEventListener("astro:page-load", boot);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
+  }
+</script>
+
+<style>
+  .post-content :global(.tac) {
+    text-align: center;
+  }
+
+  .post-content :global(.tac img),
+  .post-content :global(.tac picture),
+  .post-content :global(.tac video) {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .post-content :global(picture),
+  .post-content :global(img) {
+    display: block;
+  }
+
+  :global(.toc-link[data-active="true"]) {
+    color: #5eead4;
+    font-weight: 600;
+  }
+</style>

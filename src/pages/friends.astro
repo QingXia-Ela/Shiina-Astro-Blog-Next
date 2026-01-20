@@ -1,0 +1,123 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getEntry } from "astro:content";
+
+const friendsEntry = await getEntry("friends", "friends");
+const friends = friendsEntry?.data?.friends ?? [];
+const renderResult = friendsEntry ? await friendsEntry.render() : null;
+const Content = renderResult?.Content;
+
+const hasText = (value) => typeof value === "string" && value.trim().length > 0;
+const getInitial = (value) => (hasText(value) ? value.trim().slice(0, 1) : "?");
+const itemBase = "flex items-start gap-4 py-5";
+const itemLink = `${itemBase} group transition`;
+---
+
+<Layout title="友链 - Shiina's Blog">
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="space-y-2 pb-6">
+      <h1 class="text-3xl font-semibold tracking-tight">友链</h1>
+      <p class="text-sm text-neutral-500">共 {friends.length} 个</p>
+    </header>
+
+    <section class="mt-10">
+      {
+        friends.length === 0 ? (
+          <div class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 text-sm text-neutral-400">
+            暂无友链
+          </div>
+        ) : (
+          <div class="divide-y divide-neutral-800 border-t border-neutral-800">
+            {friends.map((friend) => {
+              const headingClass = hasText(friend.url)
+                ? "text-base font-semibold text-neutral-100 transition group-hover:text-[#5EEAD4]"
+                : "text-base font-semibold text-neutral-100";
+
+              const content = (
+                <>
+                  {hasText(friend.avatar) ? (
+                    <img
+                      class="h-12 w-12 rounded-full border border-neutral-800 object-cover"
+                      src={friend.avatar}
+                      alt={`${friend.name ?? "友链"} 头像`}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full border border-neutral-800 bg-neutral-950 text-sm font-semibold text-neutral-200">
+                      {getInitial(friend.name)}
+                    </div>
+                  )}
+                  <div class="min-w-0 space-y-1">
+                    <h2 class={headingClass}>{friend.name ?? "未命名"}</h2>
+                    {hasText(friend.description) && (
+                      <p class="text-sm text-neutral-400">
+                        {friend.description}
+                      </p>
+                    )}
+                  </div>
+                </>
+              );
+
+              return hasText(friend.url) ? (
+                <a
+                  class={itemLink}
+                  href={friend.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {content}
+                </a>
+              ) : (
+                <div class={itemBase}>{content}</div>
+              );
+            })}
+          </div>
+        )
+      }
+    </section>
+
+    {
+      Content && (
+        <section class="mt-12">
+          <article class="apply-content rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 text-sm text-neutral-300">
+            <Content />
+          </article>
+        </section>
+      )
+    }
+  </main>
+</Layout>
+
+<style>
+  .apply-content :global(h1),
+  .apply-content :global(h2),
+  .apply-content :global(h3) {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #e5e5e5;
+  }
+
+  .apply-content :global(ul) {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+
+  .apply-content :global(li) {
+    margin: 0.35rem 0;
+  }
+
+  .apply-content :global(a) {
+    color: #5eead4;
+  }
+
+  .apply-content :global(a:hover) {
+    color: #99f6e4;
+  }
+
+  .apply-content :global(code) {
+    border-radius: 0.375rem;
+    background: rgba(15, 118, 110, 0.2);
+    padding: 0.1rem 0.35rem;
+    color: #99f6e4;
+  }
+</style>

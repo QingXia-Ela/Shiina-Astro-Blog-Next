@@ -1,0 +1,60 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+
+const normalizeTag = (value) =>
+  typeof value === "string" ? value.trim() : String(value ?? "").trim();
+
+const tagMap = new Map();
+
+for (const post of allPosts) {
+  for (const rawTag of post.data.tags ?? []) {
+    const tagName = normalizeTag(rawTag);
+    if (!tagName) continue;
+    tagMap.set(tagName, (tagMap.get(tagName) ?? 0) + 1);
+  }
+}
+
+const tags = Array.from(tagMap, ([name, count]) => ({ name, count })).sort(
+  (a, b) =>
+    b.count - a.count ||
+    a.name.localeCompare(b.name, "zh-CN", { sensitivity: "base" }),
+);
+
+const tagHref = (name) => `/tags/${encodeURIComponent(name)}`;
+---
+
+<Layout title="标签 - Shiina's Blog">
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="space-y-2 border-b border-neutral-800 pb-6">
+      <h1 class="text-3xl font-semibold tracking-tight">标签</h1>
+      <p class="text-sm text-neutral-400">共 {tags.length} 个标签</p>
+    </header>
+
+    {
+      tags.length === 0 ? (
+        <div class="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 text-sm text-neutral-400">
+          暂无标签
+        </div>
+      ) : (
+        <div class="mt-8 flex flex-wrap gap-3">
+          {tags.map((tag) => (
+            <a
+              class="group inline-flex items-center gap-2 rounded-full bg-neutral-900/60 px-4 py-2 text-sm transition hover:bg-[#134E4A]/40"
+              href={tagHref(tag.name)}
+            >
+              <span class="font-medium text-neutral-100 decoration-[#2DD4BF]/70 transition group-hover:text-[#99F6E4] group-hover:decoration-[#99F6E4]">
+                {tag.name}
+              </span>
+              <span class="rounded-full border border-neutral-800 bg-neutral-950 px-2 py-0.5 text-[11px] text-neutral-400 transition group-hover:border-[#0F766E] group-hover:text-[#5EEAD4]">
+                {tag.count}
+              </span>
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </main>
+</Layout>

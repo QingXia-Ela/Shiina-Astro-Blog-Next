@@ -1,0 +1,65 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+const [about] = await Astro.glob("../content/about/about.mdx");
+const Content = about?.Content;
+const frontmatter = about?.frontmatter ?? {};
+const title = frontmatter.title ?? "关于我";
+const description = frontmatter.description ?? "";
+---
+
+<Layout title={`${title} - Shiina's Blog`} description={description}>
+  <main class="mx-auto max-w-7xl px-4 py-10">
+    <div
+      class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] lg:gap-8"
+    >
+      <div class="hidden lg:block"></div>
+      <div class="min-w-0">
+        <article class="space-y-8">
+          <header class="space-y-3">
+            <h1 class="text-3xl font-semibold tracking-tight md:text-4xl">
+              {title}
+            </h1>
+            {
+              description && (
+                <p class="text-sm text-neutral-400">{description}</p>
+              )
+            }
+          </header>
+
+          <div
+            class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 md:p-8"
+          >
+            <article
+              class="post-content prose prose-invert max-w-none
+          prose-headings:scroll-mt-24
+          prose-headings:text-neutral-100
+          prose-p:text-neutral-300
+          prose-a:text-[#2DD4BF] prose-a:font-medium prose-a:no-underline hover:prose-a:text-[#99F6E4]
+          prose-strong:text-neutral-100
+          prose-code:text-[#99F6E4] prose-code:rounded-md prose-code:px-1.5 prose-code:py-0.5
+          prose-code:before:content-[''] prose-code:after:content-['']
+          prose-pre:bg-neutral-950 prose-pre:border prose-pre:border-neutral-800 prose-pre:rounded-xl
+          prose-blockquote:border-[#0F766E] prose-blockquote:bg-neutral-950/60 prose-blockquote:rounded-xl prose-blockquote:px-4 prose-blockquote:py-1
+          prose-hr:border-neutral-800
+          prose-li:marker:text-neutral-500
+          prose-img:rounded-md prose-img:border prose-img:border-neutral-800
+          prose-table:border prose-table:border-neutral-800
+          prose-th:border prose-th:border-neutral-800
+          prose-td:border prose-td:border-neutral-800"
+            >
+              {
+                Content ? (
+                  <Content />
+                ) : (
+                  <p class="text-sm text-neutral-500">暂无内容</p>
+                )
+              }
+            </article>
+          </div>
+        </article>
+      </div>
+      <div class="hidden lg:block"></div>
+    </div>
+  </main>
+</Layout>

@@ -1,0 +1,77 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const normalizeTag = (value) =>
+  typeof value === "string" ? value.trim() : String(value ?? "").trim();
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  const tagSet = new Set();
+  // function 必须定义在 getStaticPaths 内，不能引用外部的变量或者函数。
+  const normalizeTag = (value) =>
+    typeof value === "string" ? value.trim() : String(value ?? "").trim();
+
+  for (const post of posts) {
+    for (const rawTag of post.data.tags ?? []) {
+      const tagName = normalizeTag(rawTag);
+      if (tagName) tagSet.add(tagName);
+    }
+  }
+
+  return Array.from(tagSet).map((tag) => ({
+    params: { tag },
+    props: { tag },
+  }));
+}
+
+type Props = {
+  tag: string;
+};
+
+const { tag } = Astro.props as Props;
+
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+const tagPosts = allPosts.filter((post) =>
+  (post.data.tags ?? []).some((rawTag) => normalizeTag(rawTag) === tag),
+);
+const sortedPosts = tagPosts.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+
+const formatDate = (value) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+---
+
+<Layout title={`${tag} - 标签 - Shiina's Blog`}>
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="space-y-2 border-b border-neutral-800 pb-6">
+      <h1 class="text-3xl font-semibold tracking-tight">#{tag}</h1>
+      <p class="text-sm text-neutral-500">共 {sortedPosts.length} 篇</p>
+    </header>
+
+    {
+      sortedPosts.length === 0 ? (
+        <div class="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 text-sm text-neutral-400">
+          暂无文章
+        </div>
+      ) : (
+        <div class="mt-10 divide-y divide-neutral-800 border-t border-neutral-800">
+          {sortedPosts.map((post) => (
+            <div class="flex items-center justify-between gap-4 py-3">
+              <a
+                class="underline-offset-4 underline transition hover:text-[#99F6E4] text-[#d6d6d6]"
+                href={`/posts/${post.slug}`}
+              >
+                {post.data.title}
+              </a>
+              <span class="text-xs text-neutral-200">
+                {formatDate(post.data.date)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </main>
+</Layout>

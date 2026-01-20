@@ -1,0 +1,176 @@
+---
+import "../styles/global.css";
+
+const { title = "AstroLetter", description } = Astro.props;
+const tabs = [
+  { label: "主页", href: "/" },
+  { label: "所有文章", href: "/blog" },
+  { label: "归档", href: "/archive" },
+  { label: "标签", href: "/tags" },
+  { label: "友链", href: "/friends" },
+  { label: "关于我", href: "/about" },
+];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body class="flex min-h-screen flex-col bg-neutral-900 text-neutral-100">
+    <input id="mobile-menu" type="checkbox" class="peer sr-only" />
+    <header class="border-b border-neutral-800 bg-neutral-950/70 backdrop-blur">
+      <div
+        class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4"
+      >
+        <a href="/" class="text-lg font-semibold tracking-tight"
+          >Shiina's Blog</a
+        >
+        <nav class="hidden items-center gap-6 text-sm text-neutral-300 md:flex">
+          {
+            tabs.map((tab) => (
+              <a class="transition hover:text-white" href={tab.href}>
+                {tab.label}
+              </a>
+            ))
+          }
+          <div class="flex items-center">
+            <a
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-neutral-300 transition hover:border-neutral-800 hover:text-white"
+              href="https://github.com/QingXia-Ela"
+              rel="noreferrer"
+              target="_blank"
+              aria-label="GitHub"
+              title="GitHub"
+            >
+              <svg
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 2C6.477 2 2 6.588 2 12.246c0 4.51 2.865 8.33 6.839 9.681.5.095.682-.221.682-.491 0-.243-.009-.888-.014-1.744-2.782.62-3.369-1.37-3.369-1.37-.454-1.18-1.11-1.495-1.11-1.495-.908-.642.069-.63.069-.63 1.004.072 1.532 1.054 1.532 1.054.892 1.562 2.341 1.111 2.91.85.091-.667.35-1.111.636-1.367-2.221-.262-4.555-1.141-4.555-5.078 0-1.122.389-2.04 1.03-2.758-.103-.262-.447-1.316.098-2.744 0 0 .84-.275 2.75 1.054A9.32 9.32 0 0 1 12 7.02c.85.004 1.705.12 2.504.35 1.909-1.329 2.748-1.054 2.748-1.054.546 1.428.202 2.482.1 2.744.64.718 1.028 1.636 1.028 2.758 0 3.946-2.338 4.813-4.566 5.07.359.315.679.94.679 1.893 0 1.365-.013 2.466-.013 2.802 0 .273.18.592.688.49C19.137 20.573 22 16.756 22 12.246 22 6.588 17.523 2 12 2Z"
+                ></path>
+              </svg>
+            </a>
+            <a
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-neutral-300 transition hover:border-neutral-800 hover:text-white"
+              href="/rss.xml"
+              aria-label="RSS"
+              title="RSS"
+            >
+              <svg
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M4.5 18.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                <path d="M4 7a13 13 0 0 1 13 13h-3a10 10 0 0 0-10-10V7Z"></path>
+                <path d="M4 3a17 17 0 0 1 17 17h-3A14 14 0 0 0 4 6V3Z"></path>
+              </svg>
+            </a>
+          </div>
+        </nav>
+        <div class="md:hidden">
+          <label
+            for="mobile-menu"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-800 text-neutral-300 transition hover:border-neutral-700 hover:text-white"
+            aria-label="打开菜单"
+          >
+            <span class="flex h-4 w-5 flex-col justify-between">
+              <span class="block h-0.5 w-full rounded bg-current"></span>
+              <span class="block h-0.5 w-full rounded bg-current"></span>
+              <span class="block h-0.5 w-full rounded bg-current"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+    </header>
+    <div
+      class="fixed inset-0 z-40 hidden bg-neutral-950/70 backdrop-blur peer-checked:block"
+    >
+      <label for="mobile-menu" class="absolute inset-0" aria-hidden="true"
+      ></label>
+      <div class="relative z-10 mx-auto mt-16 w-full max-w-md px-4">
+        <div
+          class="rounded-2xl border border-neutral-800 bg-neutral-950/90 p-6 shadow-lg"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-400">菜单</span>
+            <label
+              for="mobile-menu"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-800 text-sm text-neutral-300 transition hover:border-neutral-700 hover:text-white"
+              aria-label="关闭菜单"
+            >
+              X
+            </label>
+          </div>
+          <nav class="mt-5 flex flex-col gap-2 text-sm">
+            {
+              tabs.map((tab) => (
+                <a
+                  class="rounded-xl border border-neutral-800/80 bg-neutral-900/60 px-4 py-3 text-neutral-200 transition hover:border-teal-400/70 hover:text-white"
+                  href={tab.href}
+                >
+                  {tab.label}
+                </a>
+              ))
+            }
+            <a
+              class="rounded-xl border border-neutral-800/80 bg-neutral-900/60 px-4 py-3 text-neutral-200 transition hover:border-teal-400/70 hover:text-white"
+              href="https://github.com/QingXia-Ela"
+              rel="noreferrer"
+              target="_blank"
+            >
+              GitHub
+            </a>
+            <a
+              class="rounded-xl border border-neutral-800/80 bg-neutral-900/60 px-4 py-3 text-neutral-200 transition hover:border-teal-400/70 hover:text-white"
+              href="/rss.xml"
+            >
+              RSS
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="border-t border-neutral-800 bg-neutral-950/70">
+      <div
+        class="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-neutral-400 sm:flex-row"
+      >
+        <p>© 2026 Shiina's Blog. All rights reserved.</p>
+        <div
+          class="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm"
+        >
+          <a
+            class="transition hover:text-neutral-200"
+            href="mailto:Elahere@163.com"
+          >
+            Elahere@163.com
+          </a>
+          <span class="text-neutral-600">|</span>
+          <span>粤ICP备2022085367号</span>
+          <span class="text-neutral-600">|</span>
+          <span class="text-neutral-400">Rendered by</span>
+          <a
+            class="transition hover:text-neutral-200"
+            href="https://github.com/QingXia-Ela/Shiina-Astro-Blog-Next"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Shiina-Astro-Blog-Next
+          </a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

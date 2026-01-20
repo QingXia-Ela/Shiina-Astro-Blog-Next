@@ -1,0 +1,136 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const PAGE_SIZE = 20;
+
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+const sortedPosts = allPosts.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+const totalPages = Math.max(1, Math.ceil(sortedPosts.length / PAGE_SIZE));
+const currentPage = 1;
+const pagePosts = sortedPosts.slice(0, PAGE_SIZE);
+
+const formatDate = (value) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+
+const buildSections = (posts) => {
+  const sections = [];
+  for (const post of posts) {
+    const year = post.data.date.getFullYear();
+    const lastSection = sections[sections.length - 1];
+    if (!lastSection || lastSection.year !== year) {
+      sections.push({ year, posts: [] });
+    }
+    sections[sections.length - 1].posts.push(post);
+  }
+  return sections;
+};
+
+const sections = buildSections(pagePosts);
+
+const pageHref = (pageNumber) =>
+  pageNumber === 1 ? "/archive" : `/archive/${pageNumber}`;
+const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
+const pagerBase =
+  "border-b-2 pb-1 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2DD4BF]/60";
+const activePager = `${pagerBase} border-[#2DD4BF] text-[#5EEAD4]`;
+const inactivePager = `${pagerBase} border-transparent text-neutral-400 hover:text-[#99F6E4]`;
+const actionPager = `${pagerBase} border-transparent text-neutral-300 hover:text-[#99F6E4]`;
+const disabledPager = `${pagerBase} cursor-not-allowed border-transparent text-neutral-600`;
+const prevHref = currentPage > 1 ? pageHref(currentPage - 1) : null;
+const nextHref = currentPage < totalPages ? pageHref(currentPage + 1) : null;
+---
+
+<Layout title="归档 - Shiina's Blog">
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="space-y-2 border-b border-neutral-800 pb-6">
+      <h1 class="text-3xl font-semibold tracking-tight">归档</h1>
+      <p class="text-sm text-neutral-500">共 {sortedPosts.length} 篇</p>
+    </header>
+
+    {
+      sections.length === 0 ? (
+        <div class="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 text-sm text-neutral-400">
+          暂无文章
+        </div>
+      ) : (
+        <div class="mt-10 space-y-12">
+          {sections.map((section) => (
+            <section class="space-y-4">
+              <h2 class="text-lg font-semibold text-neutral-200">
+                {section.year}
+              </h2>
+              <div class="divide-y divide-neutral-800 border-t border-neutral-800">
+                {section.posts.map((post) => (
+                  <div class="flex items-center justify-between gap-4 py-3">
+                    <a
+                      class="underline-offset-4 underline transition hover:text-[#99F6E4] text-[#d6d6d6]"
+                      href={`/posts/${post.slug}`}
+                    >
+                      {post.data.title}
+                    </a>
+                    <span class="text-xs text-neutral-200">
+                      {formatDate(post.data.date)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )
+    }
+
+    {
+      totalPages > 1 && (
+        <nav class="mt-12 flex flex-wrap items-center justify-center gap-6">
+          <span class={disabledPager} aria-disabled="true">
+            首页
+          </span>
+          {prevHref ? (
+            <a class={actionPager} href={prevHref}>
+              上一页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              上一页
+            </span>
+          )}
+          {pageNumbers.map((pageNumber) => (
+            <a
+              class={pageNumber === currentPage ? activePager : inactivePager}
+              href={pageHref(pageNumber)}
+              aria-current={pageNumber === currentPage ? "page" : undefined}
+            >
+              {pageNumber}
+            </a>
+          ))}
+          {nextHref ? (
+            <a class={actionPager} href={nextHref}>
+              下一页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              下一页
+            </span>
+          )}
+          {currentPage < totalPages ? (
+            <a
+              class={actionPager}
+              href={pageHref(totalPages)}
+              aria-label="尾页"
+            >
+              尾页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              尾页
+            </span>
+          )}
+        </nav>
+      )
+    }
+  </main>
+</Layout>

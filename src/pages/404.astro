@@ -1,0 +1,38 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+const title = "404 页面不存在";
+const description = "你访问的页面不存在或已被移动。";
+---
+
+<Layout title={`${title} - Shiina's Blog`} description={description}>
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="space-y-2 border-b border-neutral-800 pb-6">
+      <p class="text-xs uppercase tracking-[0.2em] text-neutral-500">
+        Not Found
+      </p>
+      <h1 class="text-3xl font-semibold tracking-tight">页面不存在</h1>
+      <p class="text-sm text-neutral-400">{description}</p>
+    </header>
+    <p class="mt-3 text-sm text-neutral-400">
+      <span id="countdown">5</span> 秒后自动返回主页。 <a
+        href="/"
+        class="text-[#2DD4BF] transition hover:text-[#2DD4BF]/80 underline"
+        >立即返回</a
+      >
+    </p>
+  </main>
+</Layout>
+
+<script>
+  const countdownEl = document.getElementById("countdown");
+  let seconds = 5;
+  const timer = setInterval(() => {
+    seconds -= 1;
+    if (countdownEl) countdownEl.textContent = String(Math.max(seconds, 0));
+    if (seconds <= 0) {
+      clearInterval(timer);
+      window.location.href = "/";
+    }
+  }, 1000);
+</script>

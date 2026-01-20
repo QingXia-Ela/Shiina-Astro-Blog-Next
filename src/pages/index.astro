@@ -1,0 +1,169 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const MAX_LATEST = 5;
+const MAX_RECOMMEND = 5;
+const DEFAULT_AUTHOR = "Shiina";
+
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+const sortedPosts = allPosts.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+
+const stripMarkdown = (value = "") =>
+  value
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
+    .replace(/\[[^\]]+\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#>*_~\-]{1,}/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const buildExcerpt = (post) => {
+  if (typeof post.data.description === "string") {
+    const trimmed = post.data.description.trim();
+    if (trimmed) return trimmed;
+  }
+  const plain = stripMarkdown(post.body.slice(0, 120) ?? "");
+  return plain || "暂无摘要";
+};
+
+const formatDate = (value) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+
+const resolveCover = (post) => {
+  const candidates = [post.data.index_img, post.data.banner_img];
+  const cover = candidates.find(
+    (value) => typeof value === "string" && value.trim().length > 0,
+  );
+  return cover ? cover.trim() : "";
+};
+
+const toCard = (post) => ({
+  title: post.data.title,
+  excerpt: buildExcerpt(post),
+  date: formatDate(post.data.date),
+  author: DEFAULT_AUTHOR,
+  slug: post.slug,
+  cover: resolveCover(post),
+});
+
+const latestPosts = sortedPosts.slice(0, MAX_LATEST).map(toCard);
+const featuredPost = latestPosts[0];
+const latestList = latestPosts.slice(1);
+const topRecommendations = sortedPosts
+  .filter((post) => post.data.recommend)
+  .slice(0, MAX_RECOMMEND)
+  .map(toCard);
+const hasCover = (value) =>
+  typeof value === "string" && value.trim().length > 0;
+---
+
+<Layout title="主页 - Shiina's Blog">
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <section class="space-y-6">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <h1 class="text-2xl font-semibold tracking-tight">最新文章</h1>
+        <a
+          class="text-sm text-[#2DD4BF] transition hover:text-[#5EEAD4]"
+          href="/blog"
+        >
+          查看全部文章
+        </a>
+      </div>
+
+      {
+        featuredPost && (
+          <a
+            class="group block overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 transition hover:border-[#0F766E]"
+            href={`/posts/${featuredPost.slug}`}
+          >
+            {hasCover(featuredPost.cover) && (
+              <div class="flex aspect-video items-center justify-center overflow-hidden bg-neutral-950 text-neutral-900">
+                <img
+                  src={featuredPost.cover}
+                  alt={featuredPost.title}
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+            )}
+            <div class="space-y-3 p-6">
+              <h2 class="text-lg font-semibold transition group-hover:text-[#5EEAD4]">
+                {featuredPost.title}
+              </h2>
+              <p class="text-sm text-neutral-400 line-clamp-2">
+                {featuredPost.excerpt}
+              </p>
+              <p class="text-xs text-neutral-500">
+                {featuredPost.date} · {featuredPost.author}
+              </p>
+            </div>
+          </a>
+        )
+      }
+
+      {
+        latestList.length > 0 && (
+          <div class="grid gap-6 md:grid-cols-2">
+            {latestList.map((post) => (
+              <a
+                class="group flex flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 transition hover:border-[#0F766E]"
+                href={`/posts/${post.slug}`}
+              >
+                <div class="space-y-2 p-5">
+                  <h3 class="text-base font-semibold transition group-hover:text-[#5EEAD4]">
+                    {post.title}
+                  </h3>
+                  <p class="text-sm text-neutral-400 line-clamp-2">
+                    {post.excerpt}
+                  </p>
+                  <p class="text-xs text-neutral-500">
+                    {post.date} · {post.author}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </section>
+
+    <section class="mt-14 space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold tracking-tight">推荐阅读</h2>
+      </div>
+      {
+        topRecommendations.length === 0 ? (
+          <div class="rounded-2xl border border-dashed border-neutral-800 bg-neutral-900/40 p-6 text-sm text-neutral-500">
+            暂无推荐文章
+          </div>
+        ) : (
+          <div class="space-y-4">
+            {topRecommendations.map((post) => (
+              <a
+                class="block rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 transition hover:border-[#0F766E]"
+                href={`/posts/${post.slug}`}
+              >
+                <div class="flex flex-col gap-4 md:flex-row md:items-center">
+                  <div class="space-y-2">
+                    <h3 class="text-base font-semibold">{post.title}</h3>
+                    <p class="text-sm text-neutral-400 line-clamp-2">
+                      {post.excerpt}
+                    </p>
+                    <p class="text-xs text-neutral-500">
+                      {post.date} · {post.author}
+                    </p>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </section>
+  </main>
+</Layout>

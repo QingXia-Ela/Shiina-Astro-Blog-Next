@@ -1,0 +1,1 @@
+type ExtractPromises<T> = T extends Promise<infer U> ? U : T;

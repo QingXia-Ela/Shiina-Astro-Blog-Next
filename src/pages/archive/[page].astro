@@ -1,0 +1,169 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import type { PaginateFunction } from "astro";
+import type { CollectionEntry } from "astro:content";
+
+export async function getStaticPaths({
+  paginate,
+}: {
+  paginate: PaginateFunction;
+}) {
+  const PAGE_SIZE = 20;
+  const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+  const sortedPosts = allPosts.sort(
+    (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+  );
+
+  return paginate(sortedPosts, { pageSize: PAGE_SIZE }).filter(
+    ({ params }) => params.page !== "1",
+  );
+}
+
+type Props = {
+  page: {
+    data: CollectionEntry<"blog">[];
+    currentPage: number;
+    lastPage: number;
+    url: {
+      current: string;
+      prev?: string;
+      next?: string;
+    };
+  };
+};
+
+const { page } = Astro.props as Props;
+const currentPage = page.currentPage;
+
+const formatDate = (value) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+
+const buildSections = (posts) => {
+  const sections = [];
+  for (const post of posts) {
+    const year = post.data.date.getFullYear();
+    const lastSection = sections[sections.length - 1];
+    if (!lastSection || lastSection.year !== year) {
+      sections.push({ year, posts: [] });
+    }
+    sections[sections.length - 1].posts.push(post);
+  }
+  return sections;
+};
+
+const sections = buildSections(page.data);
+
+const pageHref = (pageNumber) =>
+  pageNumber === 1 ? "/archive" : `/archive/${pageNumber}`;
+const pageNumbers = Array.from(
+  { length: page.lastPage },
+  (_, index) => index + 1,
+);
+const pagerBase =
+  "border-b-2 pb-1 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2DD4BF]/60";
+const activePager = `${pagerBase} border-neutral-100 text-neutral-100`;
+const inactivePager = `${pagerBase} border-transparent text-neutral-400 hover:text-neutral-100`;
+const actionPager = `${pagerBase} border-transparent text-neutral-300 hover:text-neutral-100`;
+const disabledPager = `${pagerBase} cursor-not-allowed border-transparent text-neutral-600`;
+const prevHref = currentPage > 1 ? pageHref(currentPage - 1) : null;
+const nextHref = currentPage < page.lastPage ? pageHref(currentPage + 1) : null;
+---
+
+<Layout title={`归档 - 第${currentPage}页 - Shiina's Blog`}>
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="space-y-2">
+      <h1 class="text-3xl font-semibold tracking-tight">归档</h1>
+      <p class="text-sm text-neutral-400">
+        第 {currentPage} 页 / 共 {page.lastPage} 页
+      </p>
+    </header>
+
+    {
+      sections.length === 0 ? (
+        <div class="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 text-sm text-neutral-400">
+          暂无文章
+        </div>
+      ) : (
+        <div class="mt-10 space-y-10">
+          {sections.map((section) => (
+            <section class="space-y-4">
+              <h2 class="text-xl font-semibold">{section.year}</h2>
+              <div class="divide-y divide-neutral-800">
+                {section.posts.map((post) => (
+                  <div class="flex items-center justify-between gap-4 py-3">
+                    <a
+                      class="text-sm text-neutral-100 transition hover:text-[#5EEAD4]"
+                      href={`/blog/${post.slug}`}
+                    >
+                      {post.data.title}
+                    </a>
+                    <span class="text-xs text-neutral-400">
+                      {formatDate(post.data.date)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )
+    }
+
+    {
+      page.lastPage > 1 && (
+        <nav class="mt-12 flex flex-wrap items-center justify-center gap-6">
+          {currentPage > 1 ? (
+            <a class={actionPager} href={pageHref(1)} aria-label="首页">
+              首页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              首页
+            </span>
+          )}
+          {prevHref ? (
+            <a class={actionPager} href={prevHref}>
+              上一页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              上一页
+            </span>
+          )}
+          {pageNumbers.map((pageNumber) => (
+            <a
+              class={pageNumber === currentPage ? activePager : inactivePager}
+              href={pageHref(pageNumber)}
+              aria-current={pageNumber === currentPage ? "page" : undefined}
+            >
+              {pageNumber}
+            </a>
+          ))}
+          {nextHref ? (
+            <a class={actionPager} href={nextHref}>
+              下一页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              下一页
+            </span>
+          )}
+          {currentPage < page.lastPage ? (
+            <a
+              class={actionPager}
+              href={pageHref(page.lastPage)}
+              aria-label="尾页"
+            >
+              尾页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              尾页
+            </span>
+          )}
+        </nav>
+      )
+    }
+  </main>
+</Layout>

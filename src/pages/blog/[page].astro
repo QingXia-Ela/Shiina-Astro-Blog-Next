@@ -1,0 +1,176 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import PostCard from "@/components/PostCard.astro";
+import { getCollection } from "astro:content";
+import type { PaginateFunction } from "astro";
+import type { CollectionEntry } from "astro:content";
+
+const DEFAULT_AUTHOR = "Shiina";
+const ARCHIVE_TITLE = "所有文章";
+
+export async function getStaticPaths({
+  paginate,
+}: {
+  paginate: PaginateFunction;
+}) {
+  const PAGE_SIZE = 8;
+  const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+  const sortedPosts = allPosts.sort(
+    (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+  );
+
+  return paginate(sortedPosts, { pageSize: PAGE_SIZE }).filter(
+    ({ params }) => params.page !== "1",
+  );
+}
+
+type Props = {
+  page: {
+    data: CollectionEntry<"blog">[];
+    currentPage: number;
+    lastPage: number;
+    url: {
+      current: string;
+      prev?: string;
+      next?: string;
+    };
+  };
+};
+
+const { page } = Astro.props as Props;
+const currentPage = page.currentPage;
+
+const stripMarkdown = (value = "") =>
+  value
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
+    .replace(/\[[^\]]+\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#>*_~\-]{1,}/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const buildExcerpt = (post) => {
+  if (typeof post.data.description === "string") {
+    const trimmed = post.data.description.trim();
+    if (trimmed) return trimmed;
+  }
+  const plain = stripMarkdown(post.body ?? "");
+  return plain || "暂无摘要";
+};
+
+const formatDate = (value) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+
+const pageHref = (pageNumber) =>
+  pageNumber === 1 ? "/blog" : `/blog/${pageNumber}`;
+
+const pageNumbers = Array.from(
+  { length: page.lastPage },
+  (_, index) => index + 1,
+);
+const pagerBase =
+  "border-b-2 pb-1 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2DD4BF]/60";
+const activePager = `${pagerBase} border-neutral-100 text-neutral-100`;
+const inactivePager = `${pagerBase} border-transparent text-neutral-400 hover:text-neutral-100`;
+const actionPager = `${pagerBase} border-transparent text-neutral-300 hover:text-neutral-100`;
+const disabledPager = `${pagerBase} cursor-not-allowed border-transparent text-neutral-600`;
+const prevHref = currentPage > 1 ? pageHref(currentPage - 1) : null;
+const nextHref = currentPage < page.lastPage ? pageHref(currentPage + 1) : null;
+---
+
+<Layout title={`${ARCHIVE_TITLE} - 第${currentPage}页 - Shiina's Blog`}>
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="space-y-2 border-b border-neutral-800 pb-6">
+      <h1 class="text-3xl font-semibold tracking-tight">{ARCHIVE_TITLE}</h1>
+      <p class="text-sm text-neutral-400">
+        第 {currentPage} 页 / 共 {page.lastPage} 页
+      </p>
+    </header>
+
+    <section class="blog-list mt-8 space-y-6">
+      {
+        page.data.map((post) => (
+          <PostCard
+            imageSrc={
+              post.data.index_img
+                ? `/content/blog/${post.data.title}/${post.data.index_img}`
+                : undefined
+            }
+            title={post.data.title}
+            description={buildExcerpt(post)}
+            date={formatDate(post.data.date)}
+            author={DEFAULT_AUTHOR}
+            href={`/posts/${post.slug}`}
+          />
+        ))
+      }
+    </section>
+
+    {
+      page.lastPage > 1 && (
+        <nav class="mt-12 flex flex-wrap items-center justify-center gap-6">
+          {currentPage > 1 ? (
+            <a class={actionPager} href={pageHref(1)} aria-label="首页">
+              首页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              首页
+            </span>
+          )}
+          {prevHref ? (
+            <a class={actionPager} href={prevHref}>
+              上一页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              上一页
+            </span>
+          )}
+          {pageNumbers.map((pageNumber) => (
+            <a
+              class={pageNumber === currentPage ? activePager : inactivePager}
+              href={pageHref(pageNumber)}
+              aria-current={pageNumber === currentPage ? "page" : undefined}
+            >
+              {pageNumber}
+            </a>
+          ))}
+          {nextHref ? (
+            <a class={actionPager} href={nextHref}>
+              下一页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              下一页
+            </span>
+          )}
+          {currentPage < page.lastPage ? (
+            <a
+              class={actionPager}
+              href={pageHref(page.lastPage)}
+              aria-label="尾页"
+            >
+              尾页
+            </a>
+          ) : (
+            <span class={disabledPager} aria-disabled="true">
+              尾页
+            </span>
+          )}
+        </nav>
+      )
+    }
+  </main>
+</Layout>
+
+<style>
+  .blog-list :global(p.mt-3) {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

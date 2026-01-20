@@ -1,0 +1,23 @@
+---
+const title = "转载申请";
+const licenseUrl = "http://creativecommons.org/licenses/by/4.0/";
+const contentStart = "本作品采用 ";
+const contentEnd =
+  " 进行许可，转载时请注明原文链接，图片在使用时请保留全部内容，商业转载请联系作者获得授权。";
+---
+
+<section class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 text-sm text-neutral-300">
+  <h2 class="text-base font-semibold text-neutral-100">{title}</h2>
+  <p class="mt-2 leading-relaxed text-neutral-400">
+    {contentStart}
+    <a
+      class="text-[#2DD4BF] transition hover:text-[#99F6E4]"
+      href={licenseUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
+      知识共享署名 4.0 国际许可协议
+    </a>
+    {contentEnd}
+  </p>
+</section>
