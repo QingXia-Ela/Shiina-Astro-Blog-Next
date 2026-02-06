@@ -12,12 +12,11 @@ export async function getStaticPaths() {
   const toDateText = (value) =>
     value instanceof Date ? value.toISOString() : String(value ?? "");
 
-  return sortedPosts.map((post, index) => {
+  return sortedPosts.flatMap((post, index) => {
     const prevPost = sortedPosts[index + 1];
     const nextPost = sortedPosts[index - 1];
-
-    return {
-      params: { name: post.slug },
+    const hrefName = post.data.url_title;
+    const baseEntry = {
       props: {
         entry: post,
         prev: prevPost
@@ -25,6 +24,7 @@ export async function getStaticPaths() {
               title: prevPost.data.title,
               slug: prevPost.slug,
               date: toDateText(prevPost.data.date),
+              href: `/posts/${prevPost.data.url_title || prevPost.slug}`,
             }
           : null,
         next: nextPost
@@ -32,10 +32,27 @@ export async function getStaticPaths() {
               title: nextPost.data.title,
               slug: nextPost.slug,
               date: toDateText(nextPost.data.date),
+              href: `/posts/${nextPost.data.url_title || nextPost.slug}`,
             }
           : null,
       },
     };
+
+    const items = [
+      {
+        params: { name: post.slug },
+        ...baseEntry,
+      },
+    ];
+
+    if (hrefName && hrefName !== post.slug) {
+      items.push({
+        params: { name: hrefName },
+        ...baseEntry,
+      });
+    }
+
+    return items;
   });
 }
 
@@ -45,11 +62,13 @@ type Props = {
     title: string;
     slug: string;
     date: string;
+    href?: string;
   } | null;
   next?: {
     title: string;
     slug: string;
     date: string;
+    href?: string;
   } | null;
 };
 
@@ -192,7 +211,7 @@ const tocItems = (headings ?? []).filter(
                 {prev && (
                   <a
                     class="group rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 transition hover:border-[#0F766E]"
-                    href={`/posts/${prev.slug}`}
+                    href={prev.href || `/posts/${prev.slug}`}
                   >
                     <span class="text-xs text-neutral-500">上一篇</span>
                     <h2 class="mt-2 text-base font-semibold text-neutral-100 transition group-hover:text-[#5EEAD4]">
@@ -206,7 +225,7 @@ const tocItems = (headings ?? []).filter(
                 {next && (
                   <a
                     class="group rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 text-right transition hover:border-[#0F766E] md:col-start-2"
-                    href={`/posts/${next.slug}`}
+                    href={next.href || `/posts/${next.slug}`}
                   >
                     <span class="text-xs text-neutral-500">下一篇</span>
                     <h2 class="mt-2 text-base font-semibold text-neutral-100 transition group-hover:text-[#5EEAD4]">

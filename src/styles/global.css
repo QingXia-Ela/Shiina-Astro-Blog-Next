@@ -1,2 +1,6 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+code {
+  font-family: 'Microsoft YaHei', sans-serif;
+}

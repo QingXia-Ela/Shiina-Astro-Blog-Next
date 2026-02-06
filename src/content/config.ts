@@ -11,7 +11,8 @@ const blog = defineCollection({
     index_img: z.string().optional(),
     banner_img: z.string().optional(),
     recommend: z.boolean().optional(),
-    draft: z.boolean().optional()
+    draft: z.boolean().optional(),
+    url_title: z.string().optional()
   })
 })
 

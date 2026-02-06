@@ -102,7 +102,7 @@ const nextHref = currentPage < page.lastPage ? pageHref(currentPage + 1) : null;
             description={buildExcerpt(post)}
             date={formatDate(post.data.date)}
             author={DEFAULT_AUTHOR}
-            href={`/posts/${post.slug}`}
+            href={`/posts/${post.data.url_title || post.slug}`}
           />
         ))
       }

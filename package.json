@@ -9,6 +9,9 @@
     "build": "astro build",
     "preview": "astro preview"
   },
+  "bin": {
+    "blog": "./bin/blog.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,6 +22,9 @@
     "@tailwindcss/typography": "latest",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.11",
+    "markdown-it": "^14.1.0",
+    "sanitize-html": "^2.17.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.18"
   }
 }

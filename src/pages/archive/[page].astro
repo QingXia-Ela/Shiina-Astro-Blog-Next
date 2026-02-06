@@ -94,7 +94,7 @@ const nextHref = currentPage < page.lastPage ? pageHref(currentPage + 1) : null;
                   <div class="flex items-center justify-between gap-4 py-3">
                     <a
                       class="text-sm text-neutral-100 transition hover:text-[#5EEAD4]"
-                      href={`/blog/${post.slug}`}
+                      href={`/blog/${post.data.url_title || post.slug}`}
                     >
                       {post.data.title}
                     </a>
