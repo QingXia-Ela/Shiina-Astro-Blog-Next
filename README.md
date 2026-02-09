@@ -35,8 +35,8 @@ https://github.com/QingXia-Ela/Shiina-Astro-Blog?tab=readme-ov-file#%E4%B8%BA%E4
 ## 项目克隆
 
 ```
-git clone https://github.com/QingXia-Ela/Shiina-Astro-Blog.git
-cd ./Shiina-Astro-Blog
+git clone https://github.com/QingXia-Ela/Shiina-Astro-Blog-Next.git
+cd ./Shiina-Astro-Blog-Next
 pnpm i
 ```
 
